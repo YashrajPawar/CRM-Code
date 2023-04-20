@@ -3,14 +3,14 @@ const objectController = require('../utils/objectConverter')
 const User = require('../models/user.model');
 const objectConverter = require('../utils/objectConverter');
 const constants = require('../utils/constants');
-
+const sendEmail = require('../utils/notificationClient');
 
 async function createTicket(req, res) {
 
     const ticketObj = {
         title: req.body.title,
-        description: req.body.description,
-        ticketPriority: req.bodyticketPriority,
+        description: req.body.description, 
+        priority: req.body.priority,
         status: req.body.status,
         reporter: req.userId,
     }
@@ -48,9 +48,17 @@ async function createTicket(req, res) {
             //Updating Engineer
             engineer.ticketsAssigned.push(ticket._id);
             await engineer.save();
+
+
+         /**
+         * Send notification to all participants of this ticket
+         */
+           
+            let content = `Ticket with id: ${ticket._id} is created by ${user.userId} : ${ticket.description}`;
+            let subject = `Ticket ${ticket._id} created`;
+            let emails = `${user.email},${engineer.email}`;
+            sendEmail(ticket._id, subject, content, emails, user.userId);
         }
-
-
 
         res.send(objectController.ticketResponse(ticket))
 
